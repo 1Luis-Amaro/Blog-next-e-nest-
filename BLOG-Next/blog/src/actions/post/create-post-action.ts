@@ -5,7 +5,7 @@ import { verifyLoginSession } from "@/lib/login/manage-login";
 import { PostCreateSchema } from "@/lib/post/validation";
 import { PostModel } from "@/models/post/post-model";
 import { postRepository } from "@/repositories/post";
-import { getZodErrorMessages } from "@/utils/get-zod-error-message";
+import { getZodErrorMessages } from "@/utils/get-zod-error-messages";
 import { makeSlugFromText } from "@/utils/make-slug-from-text";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
