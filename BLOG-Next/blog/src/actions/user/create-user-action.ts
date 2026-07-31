@@ -23,7 +23,7 @@ export async function createUserAction( //// Criando a Server Action que vai pro
       success: false, // E coloco que não teve sucesso (false)
     };
   }
-   //formData.entries() - o entries le cada linha do formData e me devolve uma lista   //Object.fromEntries - aqui eu transformo a lista em objeto javascript
+  //formData.entries() - o entries le cada linha do formData e me devolve uma lista   //Object.fromEntries - aqui eu transformo a lista em objeto javascript
   const formObj = Object.fromEntries(formData.entries()); //  / Vou pegar os dados que vieram do formData e converter em um objeto JavaScript normal (ex: { name: 'João', email: 'joao@email.com' })
   const parsedFormData = CreateUserSchema.safeParse(formObj); //aqui pego o formData convertido e vou validar essas informações, pra fazer isso chamo o schema o CreateUserSchema que usa o Zod,
   //O safeParse NÃO LANÇA ERRO, ele retorna um objeto com .success e .data ou .error
@@ -38,12 +38,48 @@ export async function createUserAction( //// Criando a Server Action que vai pro
 
   //FETCH API
 
-  return {
-    user: state.user, //agora se passar por todos esses if essas validações Retorno o estado do usuário (que veio do frontend, mas poderia ser o usuário criado)
-    errors: [], //aqui coloco um array de erros vazio então não vai me trazer nada não tem erros para mostrar
-    success: true, //success como true, indicando que a ação foi bem-sucedida
+  const apiUrl = process.env.API_URL || 'http://localhost:3001'
+  //const apiUrl = 'http://localhost:3001/user'
 
+  try {
+    const response = await fetch(`${apiUrl}/user`, {
+      method: 'POST',
+      headers: {
+        'Contente-Type': 'application/json',
+      },
+      body: JSON.stringify(parsedFormData.data)
+    })
+    const json = await response.json()
+
+    if (!response.ok) {
+      console.log(json)
+      return {
+        user: PublicUserSchema.parse(formObj),
+        errors: json.message,
+        success: false,
+      }
+    }
+
+      return {
+        user:PublicUserSchema.parse(formObj),
+        errors: ['Success'],
+        success: true,
+      }
+  } catch (e) {
+    console.log(e)
+    return {
+      user: PublicUserSchema.parse(formObj),
+      errors: ['Falha ao conectar-se ao Servidor'],
+      success: false, //,
+    }
   }
+
+  // return {
+  //   user: PublicUserSchema.parse(formObj), //agora se passar por todos esses if essas validações Retorno o estado do usuário (que veio do frontend, mas poderia ser o usuário criado)
+  //   errors: ['Success'], //aqui coloco um array de erros vazio então não vai me trazer nada não tem erros para mostrar
+  //   success: true, //success como true, indicando que a ação foi bem-sucedida
+
+  // }
 
 }
 
