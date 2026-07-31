@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste CORS</title>
+</head>
+<body>
+    <h1>🌐 Teste CORS - Aula</h1>
+    <button onclick="testar()">Fazer Requisição</button>
+    <div id="resultado"></div>
+
+    <script>
+    async function testar() {
+        const div = document.getElementById('resultado');
+        div.innerHTML = '⏳ Enviando...';
+
+        try {
+            // Use a rota que o professor está ensinando
+            const response = await fetch('http://localhost:3001/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: 'Luis@email.com',
+                    password: '123456'
+                })
+            });
+
+            const data = await response.json();
+            div.innerHTML = `✅ Sucesso!<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            div.style.background = '#d4edda';
+        } catch (error) {
+            div.innerHTML = `❌ Erro: ${error.message}`;
+            div.style.background = '#f8d7da';
+        }
+    }
+    </script>
+</body>
+</html>
