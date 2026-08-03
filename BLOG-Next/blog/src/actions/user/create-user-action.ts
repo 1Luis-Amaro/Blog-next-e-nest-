@@ -14,6 +14,8 @@ export async function createUserAction( //// Criando a Server Action que vai pro
   state: CreateUserActionState, // O estado atual da ação (vem do useActionState no frontend) com user, errors e success
   formData: FormData //Os dados do formulário que o usuário preencheu e enviou
 ): Promise<CreateUserActionState> { //prometo que as informações que vão me retornar nessa função são as do tipo do typescript que criei
+   console.log('🚀 API_URL carregada:', process.env.API_URL);
+  console.log('🚀 NODE_ENV:', process.env.NODE_ENV);
   await asyncDelay(3000); // Coloco um delay de 3 segundos pra simular uma requisição lenta (útil para teste de loading)
 
   if (!(formData instanceof FormData)) { // Se o formData que chegou na função NÃO for do tipo FormData (ou seja, se os dados vierem corrompidos)
@@ -38,39 +40,40 @@ export async function createUserAction( //// Criando a Server Action que vai pro
 
   //FETCH API
 
-  const apiUrl = process.env.API_URL || 'http://localhost:3001'
+  const apiUrl = process.env.API_URL || 'http://localhost:3001' // pego a URL da API do .env (ou uso o fallback localhost:3001)
   //const apiUrl = 'http://localhost:3001/user'
 
-  try {
-    const response = await fetch(`${apiUrl}/user`, {
-      method: 'POST',
-      headers: {
-        'Contente-Type': 'application/json',
+  try { // tento executar a requisição e capturar possíveis erros
+    const response = await fetch(`${apiUrl}/user`, { //busco minha api que tem /user
+      method: 'POST', //que tenha um metodo post
+      headers: { // defino o cabeçalho da requisição
+        'Content-Type': 'application/json', // informo que estou enviando JSON
       },
-      body: JSON.stringify(parsedFormData.data)
+      body: JSON.stringify(parsedFormData.data) //pego os dados que JÁ FORAM validados pelo Zod e converto para string JSON para enviar no corpo da requisição
     })
-    const json = await response.json()
+    const json = await response.json() ///  converto a resposta do backend de JSON para objeto JavaScript
 
-    if (!response.ok) {
-      console.log(json)
-      return {
-        user: PublicUserSchema.parse(formObj),
-        errors: json.message,
-        success: false,
+    if (!response.ok) { //se o json que veio não estiver ok
+      console.log(json) //mostro o log do erro
+      return { //e vou retornar o estado do erro
+        user: PublicUserSchema.parse(formObj), //o forObj tem a lista de objeto que veio do formulario vou converter ele para meu schema que tem validacoes de login email e senha
+        errors: json.message, //vou pegar a mensagem de erro que veio do backend
+        success: false, //indico que a ação falhou
       }
     }
 
-      return {
-        user:PublicUserSchema.parse(formObj),
-        errors: ['Success'],
-        success: true,
+    console.log(json); // mostro a resposta de sucesso no console do servidor
+      return {  //se passou do if acima
+        user:PublicUserSchema.parse(formObj), // pego os dados que veio do formulário e converto para o schema publico
+        errors: ['Success'], //O errors que vier vou colocar como Succes
+        success: true, //indico que a ação foi bem-sucedida
       }
-  } catch (e) {
-    console.log(e)
-    return {
-      user: PublicUserSchema.parse(formObj),
-      errors: ['Falha ao conectar-se ao Servidor'],
-      success: false, //,
+  } catch (e) { // se ocorrer um erro na requisição (ex: servidor offline)
+    console.log(e) //mostro o log do erro no servidor
+    return { // depois retorno o seguinte
+      user: PublicUserSchema.parse(formObj), // pego os dados que veio do formulário e converto para o schema publico
+      errors: ['Falha ao conectar-se ao Servidor'], //e retorno esse log já que não é um erro do lado do cliente
+      success: false, //indico que a ação falhou
     }
   }
 
