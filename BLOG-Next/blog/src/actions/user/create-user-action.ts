@@ -1,8 +1,10 @@
 'use server' // Avisa ao Next.js que esta função só roda no servidor
 
 import { CreateUserSchema, PublicUserDto, PublicUserSchema } from "@/lib/user/schemas" // Importa os schemas de validação e os tipos de usuário
+import { apiRequest } from "@/utils/api-request";
 import { asyncDelay } from "@/utils/async-delay"; // Importa uma função que cria um delay (espera) artificial
 import { getZodErrorMessages } from "@/utils/get-zod-error-messages"; // Importa a função que extrai as mensagens de erro do Zod
+import { redirect } from 'next/navigation';
 
 type CreateUserActionState = { //criando um type no typescript que me força a ter user errors e success
   user: PublicUserDto; // O objeto do usuário com os dados que podem ser expostos publicamente (id, name, email)
@@ -40,42 +42,25 @@ export async function createUserAction( //// Criando a Server Action que vai pro
 
   //FETCH API
 
-  const apiUrl = process.env.API_URL || 'http://localhost:3001' // pego a URL da API do .env (ou uso o fallback localhost:3001)
-  //const apiUrl = 'http://localhost:3001/user'
+  const createResponse = await apiRequest<PublicUserDto>('/user', { // chamo a apiRequest com o tipo genérico PublicUserDto (definindo que o data da resposta será um usuário público), e o caminho /user
+    method: 'POST',// defino que o método HTTP é POST (para criar um novo recurso)
+    headers: { // defino os cabeçalhos da requisição
+      'Content-Type': 'application/json', // informo que estou enviando JSON
+    },
+    body: JSON.stringify(parsedFormData.data) // converto os dados que JÁ FORAM validados pelo Zod para string JSON e envio no corpo da requisição
+  })
 
-  try { // tento executar a requisição e capturar possíveis erros
-    const response = await fetch(`${apiUrl}/user`, { //busco minha api que tem /user
-      method: 'POST', //que tenha um metodo post
-      headers: { // defino o cabeçalho da requisição
-        'Content-Type': 'application/json', // informo que estou enviando JSON
-      },
-      body: JSON.stringify(parsedFormData.data) //pego os dados que JÁ FORAM validados pelo Zod e converto para string JSON para enviar no corpo da requisição
-    })
-    const json = await response.json() ///  converto a resposta do backend de JSON para objeto JavaScript
+  if(!createResponse.success){ //se a resposta da requisição não foi um sucesso
+    return { //retorno o estado do erro
+      user: PublicUserSchema.parse(formObj),// converto os dados do formulário para o schema público (para reexibir o que o usuário digitou)
+      errors: createResponse.errors, // pego o erro que veio da requisição
+      success: createResponse.success, //pego o success que veio da requisição  que vai estar (false)
 
-    if (!response.ok) { //se o json que veio não estiver ok
-      console.log(json) //mostro o log do erro
-      return { //e vou retornar o estado do erro
-        user: PublicUserSchema.parse(formObj), //o forObj tem a lista de objeto que veio do formulario vou converter ele para meu schema que tem validacoes de login email e senha
-        errors: json.message, //vou pegar a mensagem de erro que veio do backend
-        success: false, //indico que a ação falhou
-      }
-    }
-
-    console.log(json); // mostro a resposta de sucesso no console do servidor
-      return {  //se passou do if acima
-        user:PublicUserSchema.parse(formObj), // pego os dados que veio do formulário e converto para o schema publico
-        errors: ['Success'], //O errors que vier vou colocar como Succes
-        success: true, //indico que a ação foi bem-sucedida
-      }
-  } catch (e) { // se ocorrer um erro na requisição (ex: servidor offline)
-    console.log(e) //mostro o log do erro no servidor
-    return { // depois retorno o seguinte
-      user: PublicUserSchema.parse(formObj), // pego os dados que veio do formulário e converto para o schema publico
-      errors: ['Falha ao conectar-se ao Servidor'], //e retorno esse log já que não é um erro do lado do cliente
-      success: false, //indico que a ação falhou
     }
   }
+
+
+  redirect('/login?created=1')   // se deu tudo certo, redireciono o usuário para a página de login com o parâmetro created=1 na URL (para mostrar uma mensagem de sucesso)
 
   // return {
   //   user: PublicUserSchema.parse(formObj), //agora se passar por todos esses if essas validações Retorno o estado do usuário (que veio do frontend, mas poderia ser o usuário criado)
