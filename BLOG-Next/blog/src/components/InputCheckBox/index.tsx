@@ -6,7 +6,7 @@ type InputCheckBoxProps = {
   type?: "checkbox";
 } & React.ComponentProps<"input">;
 
-export function InputCheckbox({
+export function InputCheckBox({
   labelText = "",
   type = "checkbox",
   ...props

@@ -9,7 +9,7 @@ const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
   ssr: false,
 });
 
-type MarkdownEditorProps = {
+type MarkDownEditorProps = {
   labelText?: string;
   value: string;
   setValue: React.Dispatch<React.SetStateAction<string>>;
@@ -17,13 +17,13 @@ type MarkdownEditorProps = {
   disabled?: boolean;
 };
 
-export function MarkdownEditor({
+export function MarkDownEditor({
   labelText = '',
   value,
   setValue,
   textAreaName,
   disabled = false,
-}: MarkdownEditorProps) {
+}: MarkDownEditorProps) {
   const id = useId();
 
   return (

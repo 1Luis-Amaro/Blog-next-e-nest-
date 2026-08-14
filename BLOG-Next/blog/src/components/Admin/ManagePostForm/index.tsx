@@ -1,9 +1,7 @@
 'use client';
 
 import { Button } from '@/components/Button';
-import { InputCheckbox } from '@/components/InputCheckbox';  // Atenção: InputCheckbox (sem B maiúsculo)
 import { InputText } from '@/components/InputText';
-import { MarkdownEditor } from '@/components/MarkdownEditor';  // MarkdownEditor (com d minúsculo)
 import { useActionState, useEffect, useState } from 'react';
 import { ImageUploader } from '../ImageUploader';
 import { makePartialPublicPost, PublicPost } from '@/dto/post/dto';
@@ -11,6 +9,8 @@ import { createPostAction } from '@/actions/post/create-post-action';
 import { toast } from 'react-toastify';
 import { updatePostAction } from '@/actions/post/update-post-action';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { InputCheckBox } from '@/components/InputCheckBox';
+import { MarkDownEditor } from '@/components/MarkDownEditor';
 
 type ManagePostFormUpdateProps = {
   mode: 'update';
@@ -127,7 +127,7 @@ export function ManagePostForm(props: ManagePostFormProps) {
           disabled={isPending}
         />
 
-        <MarkdownEditor
+        <MarkDownEditor
           labelText='Conteúdo'
           value={contentValue}
           setValue={setContentValue}
@@ -146,7 +146,7 @@ export function ManagePostForm(props: ManagePostFormProps) {
           disabled={isPending}
         />
 
-        <InputCheckbox
+        <InputCheckBox
           labelText='Publicar?'
           name='published'
           type='checkbox'

@@ -12,7 +12,7 @@ type LoginActionState = { //criando um type para que tenha um padrão a seguir
   errors: string[]; //e um array de string
 }
 
-export async function loginAction(state: LoginActionState, formData: FormData) { //criei uma função assincrona e passei pra ela o state e o state tem o type que criei então tem que ter duas funcionalidades por padrao, e depois passei outro parametro que são os dados do formularios
+export async function loginAction(state: LoginActionState, formData: FormData) { //criei uma função assincrona e passei pra ela o parametro state, e o state tem o type que criei então tem que ter duas funcionalidades por padrao, e depois passei outro parametro que são os dados do formularios
    const allowLogin = Boolean(Number(process.env.ALLOW_LOGIN)); // verifico se o login está permitido pelo .env. Uso Number() para converter a string do .env ("1" ou "0") em número, e Boolean() para converter em true/false
 
   if (!allowLogin) { //se o login não está permitido
