@@ -2,7 +2,7 @@
 
 import { makePartialPublicPost, makePublicPostFromDb, PublicPost } from "@/dto/post/dto"
 import { verifyLoginSession } from "@/lib/login/manage-login";
-import { PostUpdateSchema } from "@/lib/post/validation";
+import { PostUpdateSchema } from "@/lib/post/schemas";
 import { PostModel } from "@/models/post/post-model";
 import { postRepository } from "@/repositories/post";
 import { makeRandomString } from "@/utils/make-random-string";
