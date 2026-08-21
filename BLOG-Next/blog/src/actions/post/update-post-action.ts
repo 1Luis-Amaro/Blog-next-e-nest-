@@ -1,16 +1,14 @@
 'use server'
 
-import { makePartialPublicPost, makePublicPostFromDb, PublicPost } from "@/dto/post/dto"
-import { verifyLoginSession } from "@/lib/login/manage-login";
-import { PostUpdateSchema } from "@/lib/post/schemas";
-import { PostModel } from "@/models/post/post-model";
-import { postRepository } from "@/repositories/post";
+import { getLoginSessionForApi } from "@/lib/login/manage-login";
+import { PostUpdateSchema, PublicPostForApiDto, PublicPostForApiSchema, UpdatePostForApiSchema } from "@/lib/post/schemas";
+import { authenticatedApiRequest } from "@/utils/authenticated-api-request";
 import { makeRandomString } from "@/utils/make-random-string";
 import { revalidateTag } from "next/cache";
 
 
 type UpdatePostActionState = {
-  formState: PublicPost;
+  formState: PublicPostForApiDto;
   errors: string[];
   success?: string;
 
@@ -21,7 +19,7 @@ export async function updatePostAction(
   formData: FormData,
 ):
   Promise<UpdatePostActionState> {
-  const isAuthenticated = await verifyLoginSession()
+  const isAuthenticated = await getLoginSessionForApi()
 
 
   if (!(formData instanceof FormData)) {
@@ -45,53 +43,52 @@ export async function updatePostAction(
   }
 
   const formDataToObj = Object.fromEntries(formData.entries())
-  const zodParseObj = PostUpdateSchema.safeParse(formDataToObj)
+  const zodParsedObj = UpdatePostForApiSchema.safeParse(formDataToObj)
 
-   if (!isAuthenticated) {
-     return {
-      formState: makePartialPublicPost(formDataToObj),
-       errors: ['Faça login em outra aba antes de salvar']
-      }
-    }
-
-  if (!zodParseObj.success) {
-
-    const errors = zodParseObj.error.issues.map(issue => issue.message); return {
-      errors,
-      formState: makePartialPublicPost(formDataToObj),
-
-    }
-  }
-
-  const validPostData = zodParseObj.data;
-  const newPost = {
-    ...validPostData,
-  }
-
-  let post: PostModel;
-  try {
-    post = await postRepository.update(id, newPost)
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return {
-        formState: makePartialPublicPost(formDataToObj),
-        errors: [e.message]
-      }
-    }
-
+  if (!isAuthenticated) {
     return {
-      formState: makePartialPublicPost(formDataToObj),
-      errors: ['Erro desconhecido']
+      formState: PublicPostForApiSchema.parse(formDataToObj),
+      errors: ['Faça login em outra aba antes de salvar']
     }
   }
 
-  revalidateTag('posts')
-  revalidateTag(`post-${post.slug}`)
+  if (!zodParsedObj.success) {
+
+    const errors = zodParsedObj.error.issues.map(issue => issue.message); return {
+      errors,
+      formState: PublicPostForApiSchema.parse(formDataToObj),
+
+    }
+  }
+
+  const newPost = zodParsedObj.data;
+
+  const updatePostResponse = await authenticatedApiRequest<PublicPostForApiDto>(
+    `/post/me/${id}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(newPost),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  if (!updatePostResponse.success) {
+    return {
+      formState: PublicPostForApiSchema.parse(formDataToObj),
+      errors: updatePostResponse.errors,
+    }
+  }
+
+  const post = updatePostResponse.data;
+
+  revalidateTag('posts');
+  revalidateTag(`post-${post.slug}`);
 
   return {
-    formState: makePublicPostFromDb(post),
+    formState: PublicPostForApiSchema.parse(post),
     errors: [],
     success: makeRandomString(),
-  }
-
+  };
 }
