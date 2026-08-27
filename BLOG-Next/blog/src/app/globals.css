@@ -1,3 +1,9 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
-@plugin "@tailwindcss/typography"
+{/**layout para eu deixar o input pra pegar spans caso alguem tenta me atacar, vai deixar esse input "invisivel"*/}
+@layer utilities {
+  .niceInput {
+    @apply pointer-events-none absolute w-0 h-0 overflow-hidden opacity-0;
+  }
+}

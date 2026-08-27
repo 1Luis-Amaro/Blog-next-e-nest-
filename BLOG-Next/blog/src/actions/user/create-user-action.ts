@@ -4,7 +4,9 @@ import { CreateUserSchema, PublicUserDto, PublicUserSchema } from "@/lib/user/sc
 import { apiRequest } from "@/utils/api-request";
 import { asyncDelay } from "@/utils/async-delay"; // Importa uma função que cria um delay (espera) artificial
 import { getZodErrorMessages } from "@/utils/get-zod-error-messages"; // Importa a função que extrai as mensagens de erro do Zod
+import { verifyHoneypotInput } from "@/utils/verify-honeypot-input";
 import { redirect } from 'next/navigation';
+import { success } from "zod";
 
 type CreateUserActionState = { //criando um type no typescript que me força a ter user errors e success
   user: PublicUserDto; // O objeto do usuário com os dados que podem ser expostos publicamente (id, name, email)
@@ -16,9 +18,18 @@ export async function createUserAction( //// Criando a Server Action que vai pro
   state: CreateUserActionState, // O estado atual da ação (vem do useActionState no frontend) com user, errors e success
   formData: FormData //Os dados do formulário que o usuário preencheu e enviou
 ): Promise<CreateUserActionState> { //prometo que as informações que vão me retornar nessa função são as do tipo do typescript que criei
-   console.log('🚀 API_URL carregada:', process.env.API_URL);
-  console.log('🚀 NODE_ENV:', process.env.NODE_ENV);
-  await asyncDelay(3000); // Coloco um delay de 3 segundos pra simular uma requisição lenta (útil para teste de loading)
+const isBot = await verifyHoneypotInput(formData, 5000) // Verifica se é um bot: 1) se o campo honeypot foi preenchido, 2) se o formulário foi preenchido muito rápido (menos de 5 segundos). Se for bot, retorna true
+
+if(isBot) {  // Se a verificação detectou que é um bot
+  return{
+    user: state.user, // Retorno o usuário preenchido (para reexibir no formulário)
+    errors: ['nice'], // Retorno o usuário preenchido (para reexibir no formulário)
+    success: false // E deixo o success como false (operação falhou)
+  }
+}
+  //await asyncDelay(3000); // Coloco um delay de 3 segundos pra simular uma requisição lenta (útil para teste de loading)
+
+
 
   if (!(formData instanceof FormData)) { // Se o formData que chegou na função NÃO for do tipo FormData (ou seja, se os dados vierem corrompidos)
     return {

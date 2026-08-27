@@ -8,6 +8,7 @@ import { loginAction } from "@/actions/login/login-actions";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { HoneypotInput } from "../HoneypotInput";
 
 export function LoginForm() { // função que cria o formulário de login
   const initialState = { // estado inicial do formulário
@@ -71,6 +72,8 @@ export function LoginForm() { // função que cria o formulário de login
           disabled={isPending} // desabilito o campo enquanto a action está rodando
           required
         />
+
+        <HoneypotInput /> {/**componente que tem um campo invisivel para enganar bots */}
 
         <Button disabled={isPending} type="submit" className="mt-4"> {/* botão de envio, desabilitado enquanto a action está rodando */}
           <LogInIcon /> {/* ícone de login (lucide-react) */}

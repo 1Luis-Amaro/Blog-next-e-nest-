@@ -6,6 +6,7 @@ import { PublicUserSchema } from "@/lib/user/schemas";
 import { apiRequest } from "@/utils/api-request";
 import { asyncDelay } from "@/utils/async-delay"
 import { getZodErrorMessages } from "@/utils/get-zod-error-messages";
+import { verifyHoneypotInput } from "@/utils/verify-honeypot-input";
 import { redirect } from 'next/navigation';
 type LoginActionState = { //criando um type para que tenha um padrão a seguir
   email: string; //coloco um e-mail
@@ -21,7 +22,15 @@ export async function loginAction(state: LoginActionState, formData: FormData) {
       errors: ['Login not allowed'], //e a mensagem de login não permitido
     };
   }
-  await asyncDelay(5000) //Vou manter dessa forma pra quem tentar atacar o sistema nao consiga por exemplo
+ // await asyncDelay(5000) //Vou manter dessa forma pra quem tentar atacar o sistema nao consiga por exemplo
+ const isBot = await verifyHoneypotInput(formData, 5000) // Verifica se é um bot: 1) se o campo honeypot foi preenchido, 2) se o formulário foi preenchido muito rápido (menos de 5 segundos). Se for bot, retorna true
+
+if(isBot) {  // Se a verificação detectou que é um bot
+  return{
+    email: '', // Retorno o e-mail preenchido (para reexibir no formulário)
+    errors: ['nice'], // Retorno o usuário preenchido (para reexibir no formulário)
+  }
+}
 
   if (!(formData instanceof FormData)) { //se o formData não for um formulário
     return { //retorno o seguinte

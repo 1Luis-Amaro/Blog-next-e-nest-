@@ -9,6 +9,7 @@ import { useActionState, useEffect } from "react";
 import { createUserAction } from "@/actions/user/create-user-action";
 import { PublicUserSchema } from "@/lib/user/schemas";
 import { toast } from "react-toastify";
+import { HoneypotInput } from "../HoneypotInput";
 
 export function CreateUserForm() {
    const [state, action, isPending] = useActionState(createUserAction, { // useActionState gerencia o estado da action. state = dados atuais, action = função para disparar a action,
@@ -69,6 +70,8 @@ export function CreateUserForm() {
           disabled={isPending}
           required
         />
+
+                <HoneypotInput/>
 
         <Button
           disabled={isPending} // isPending = true enquanto a action está rodando (desde o clique até a resposta). Desabilito o botão e mostro "Criando..." para evitar duplo clique
