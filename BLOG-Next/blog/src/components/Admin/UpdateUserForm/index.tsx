@@ -1,5 +1,6 @@
 'use client';
 
+import { deleteUserAction } from '@/actions/user/delete-user-action';
 import { updateUserAction } from '@/actions/user/update-user-action';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
@@ -38,8 +39,18 @@ export function UpdateUserForm({user}: UpdateUserFormType) { // Função princip
     });
   }
 
-  function handleDeleteUserAccount() {
-    //
+  function handleDeleteUserAccount() { //função de deletar usuário
+    startTransition(async () => { //assim que chamo essa função começo a transição então vou deixar os botões desativados
+      if(!confirm('Confirma só mais uma vez que quer continuar'))// confirm(): função nativa do navegador que exibe uma caixa de diálogo com "OK" e "Cancelar" (se o usuário clicar em "Cancelar", retorna false)
+         return // Se o usuário clicou em "Cancelar" (confirm retornou false), interrompe a execução e fecha a caixa de diálogo
+      const result = await deleteUserAction() // Se o usuário confirmou, chama a Server Action que deleta a conta
+
+      if(result.errors) {  // Se a exclusão retornou erros (array com mensagens)
+        toast.dismiss()  // Remove todos os toasts que estão na tela (para não acumular)
+        result.errors.forEach(e => toast.error(e)) // Percorro cada erro e exibe um toast de erro
+      }
+      setIsDialogVisible(false) // Se a exclusão deu certo (ou mesmo se deu erro), fecha o diálogo de confirmação
+    })
   }
 
   useEffect(()=> { // Hook que executa quando o componente renderiza ou quando dependências mudam
