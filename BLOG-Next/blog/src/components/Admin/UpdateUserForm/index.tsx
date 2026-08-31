@@ -1,19 +1,31 @@
 'use client';
 
+import { updateUserAction } from '@/actions/user/update-user-action';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
 import { InputText } from '@/components/InputText';
+import { PublicUserDto } from '@/lib/user/schemas';
 import { asyncDelay } from '@/utils/async-delay';
 import clsx from 'clsx';
 import { LockKeyholeIcon, OctagonXIcon, UserPenIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useActionState, useEffect, useState, useTransition } from 'react';
+import { toast } from 'react-toastify';
 
-export function UpdateUserForm() { // Função principal do formulário de atualização de usuário
+type UpdateUserFormType = {
+  user: PublicUserDto
+}
+
+export function UpdateUserForm({user}: UpdateUserFormType) { // Função principal do formulário de atualização de usuário
+  const [state, action, isPending] = useActionState(updateUserAction, { // Hook que gerencia o estado da Server Action
+    user, // Dados atuais do usuário (vem das props)
+    errors: [], // Array de erros vazio (começa sem erros)
+    success: false, // Estado de sucesso começa como false
+  })
   const [isDialogVisible, setIsDialogVisible] = useState(false);  // Estado que controla se o diálogo de confirmação está visível (inicia false = oculto)
   const [isTransitioning, startTransition] = useTransition();// Hook do React para gerenciar transições (usado para desabilitar elementos enquanto o diálogo está aberto)
   const safetyDelay = 10000; // Tempo de segurança (10 segundos) que os botões ficam desabilitados após o diálogo aparecer (para evitar cliques acidentais)
-  const isElementsDisabled = isTransitioning; //const para deixar os elementos da pagina desativado, então se está na transition deixo desabilitado
+  const isElementsDisabled = isTransitioning || isPending ; //const para deixar os elementos da pagina desativado, então se está na transition deixo desabilitado
 
   function showDeleteAccountDialog( /// Função que mostra o diálogo de confirmação de exclusão de conta
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, // Evento de clique do mouse (para prevenir o comportamento padrão do link)
@@ -30,6 +42,18 @@ export function UpdateUserForm() { // Função principal do formulário de atual
     //
   }
 
+  useEffect(()=> { // Hook que executa quando o componente renderiza ou quando dependências mudam
+    toast.dismiss() // Remove toasts antigos para não acumula
+
+    if(state.errors.length > 0 ) {  // Se houver erros no estado (array com mensagens)
+      state.errors.forEach(error => toast.error(error))  // Percorre cada erro e exibe um toast de erro
+    }
+
+    if(state.success) { // Se a ação foi bem-sucedida (success = true)
+      toast.success('Atualizado com sucesso') //então envio uma mensagem de sucesso
+    }
+  })
+
   return (
     <div
       className={clsx(
@@ -38,14 +62,14 @@ export function UpdateUserForm() { // Função principal do formulário de atual
       )}
     >
        {/* Formulário de atualização (action será preenchida depois) */}
-      <form action={''} className='flex-1 flex flex-col gap-6'>
+      <form action={action} className='flex-1 flex flex-col gap-6'>
         <InputText // Campo para o usuário digitar o novo nome
           type='text'
           name='name' // Nome do campo (usado no FormData)
           labelText='Nome'  // Rótulo do campo
           placeholder='Seu nome' //informação que vai aparecer no campo
           disabled={isElementsDisabled} // Desabilito o campo enquanto a transição está ativa (diálogo aberto)
-          defaultValue={''} // Valor inicial vazio (será preenchido com os dados do usuário)
+          defaultValue={state.user.name} // Valor inicial vazio (será preenchido com os dados do usuário)
         />
       {/**input de inserção do novo e-mail */}
         <InputText
@@ -54,7 +78,7 @@ export function UpdateUserForm() { // Função principal do formulário de atual
           labelText='E-mail'
           placeholder='Seu e-mail'
           disabled={isElementsDisabled} // Desabilito o campo enquanto a transição está ativa (diálogo aberto)
-          defaultValue={''}// Valor inicial vazio (será preenchido com os dados do usuário)
+          defaultValue={state.user.email}// Valor inicial vazio (será preenchido com os dados do usuário)
         />
 
 
